@@ -142,7 +142,7 @@ export function Hero() {
       ref={heroRef}
       id="hero"
       aria-label="Blackline Auto Detailing - Hero"
-      className="relative min-h-[100dvh] w-full overflow-hidden flex flex-col justify-between"
+      className="relative min-h-0 md:min-h-[100dvh] w-full overflow-hidden flex flex-col justify-between"
       style={{ backgroundColor: 'var(--bl-bg, #08090A)' }}
     >
       {/* ── Background Automotive Vehicle Presence ────────────────────────── */}
