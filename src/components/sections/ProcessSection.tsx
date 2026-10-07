@@ -79,359 +79,390 @@ export function ProcessSection() {
   const sheenRef         = useRef<HTMLDivElement>(null)
   const progressBarRef   = useRef<HTMLDivElement>(null)
 
-  // Master Pinned GSAP Scroll Choreography
+  // Master Pinned GSAP Scroll Choreography (Desktop 1:1 scrub + Mobile touch-smoothed scrub)
   useEffect(() => {
     if (!sectionRef.current || !pinnedWrapperRef.current) return
-    const isDesktop = window.innerWidth >= 1024
-    if (!isDesktop) return
 
-    const ctx = gsap.context(() => {
-      const container   = sectionRef.current!
-      const panels      = container.querySelectorAll<HTMLElement>('.process-stage-panel')
-      const overlaysTop = container.querySelectorAll<HTMLElement>('.process-telemetry-top')
-      const overlaysBot = container.querySelectorAll<HTMLElement>('.process-telemetry-bottom')
-      const crumbs      = container.querySelectorAll<HTMLElement>('.process-breadcrumb-btn')
-      const img         = imgRef.current
-      const sheen       = sheenRef.current
-      const bar         = progressBarRef.current
+    // Prevent mobile URL address bar expand/collapse from causing scroll jumps
+    ScrollTrigger.config({ ignoreMobileResize: true })
 
-      // Initial visual setup (stages 02-04 hidden; stage 01 handled by introTl)
-      panels.forEach((p, i) => {
-        if (i > 0) {
-          gsap.set(p, {
-            autoAlpha: 0,
-            y: 28,
-            force3D: true,
-          })
+    const mm = gsap.matchMedia()
+
+    mm.add(
+      {
+        isDesktop: '(min-width: 1024px)',
+        isMobile: '(max-width: 1023px)',
+        reduceMotion: '(prefers-reduced-motion: reduce)',
+      },
+      (context) => {
+        const { isMobile, reduceMotion } = context.conditions as {
+          isDesktop: boolean
+          isMobile: boolean
+          reduceMotion: boolean
         }
-      })
 
-      overlaysTop.forEach((ov, i) => {
-        if (i > 0) {
-          gsap.set(ov, {
-            autoAlpha: 0,
-            force3D: true,
-          })
-        }
-      })
+        const container   = sectionRef.current!
+        const panels      = container.querySelectorAll<HTMLElement>('.process-stage-panel')
+        const overlaysTop = container.querySelectorAll<HTMLElement>('.process-telemetry-top')
+        const overlaysBot = container.querySelectorAll<HTMLElement>('.process-telemetry-bottom')
+        const crumbs      = container.querySelectorAll<HTMLElement>('.process-breadcrumb-btn')
+        const img         = imgRef.current
+        const sheen       = sheenRef.current
+        const bar         = progressBarRef.current
 
-      overlaysBot.forEach((ov, i) => {
-        if (i > 0) {
-          gsap.set(ov, {
-            autoAlpha: 0,
-            force3D: true,
-          })
-        }
-      })
+        // On mobile/touch: scrub: 0.6 absorbs discrete touch momentum ticks, providing silky
+        // continuous tracking without jumps between stages.
+        // On desktop: scrub: true preserves approved 1:1 instant mouse-wheel responsiveness.
+        const scrubValue = isMobile ? 0.6 : true
 
-      if (img) {
-        gsap.set(img, {
-          scale: 1.03,
-          x: 0,
-          y: 0,
-          force3D: true,
-        })
-      }
-
-      if (sheen) {
-        gsap.set(sheen, {
-          xPercent: -80,
-          opacity: 0.20,
-          force3D: true,
-        })
-      }
-
-      if (bar) {
-        gsap.set(bar, { scaleX: 0.05, transformOrigin: 'left center', force3D: true })
-      }
-
-      // ── 0. INTRODUCTORY CLEAN ENTRANCE / CINEMATIC CONNECTION ────────────
-      // Smoothly establishes 01 CLEAN and the photographic visual as the user
-      // scrolls down from the Hero into the Process section (top 85% -> top top).
-      const introTl = gsap.timeline({
-        scrollTrigger: {
-          trigger: container,
-          start: 'top 85%',
-          end: 'top top',
-          scrub: true,
-        },
-      })
-
-      if (headerRef.current) {
-        introTl.fromTo(
-          headerRef.current,
-          { opacity: 0, y: -14 },
-          { opacity: 1, y: 0, ease: 'none', force3D: true },
-          0
-        )
-      }
-
-      if (photoPortalRef.current) {
-        introTl.fromTo(
-          photoPortalRef.current,
-          {
-            opacity: 0.35,
-            scale: 0.96,
-            clipPath: 'inset(3% 3% 3% 3%)',
-          },
-          {
-            opacity: 1,
-            scale: 1,
-            clipPath: 'inset(0% 0% 0% 0%)',
-            ease: 'none',
-            force3D: true,
-          },
-          0
-        )
-      }
-
-      if (panels[0]) {
-        introTl.fromTo(
-          panels[0],
-          { autoAlpha: 0, y: 38 },
-          { autoAlpha: 1, y: 0, ease: 'none', force3D: true },
-          0
-        )
-      }
-
-      if (overlaysTop[0]) {
-        introTl.fromTo(
-          overlaysTop[0],
-          { autoAlpha: 0 },
-          { autoAlpha: 1, ease: 'none', force3D: true },
-          0.06
-        )
-      }
-
-      if (overlaysBot[0]) {
-        introTl.fromTo(
-          overlaysBot[0],
-          { autoAlpha: 0 },
-          { autoAlpha: 1, ease: 'none', force3D: true },
-          0.06
-        )
-      }
-
-      if (footerRef.current) {
-        introTl.fromTo(
-          footerRef.current,
-          { opacity: 0, y: 14 },
-          { opacity: 1, y: 0, ease: 'none', force3D: true },
-          0.06
-        )
-      }
-
-      // Breadcrumb updater (Pure DOM style update: zero React setState, zero re-renders)
-      let currentActiveCrumb = -1
-      const updateBreadcrumbs = (activeIndex: number) => {
-        if (activeIndex === currentActiveCrumb) return
-        currentActiveCrumb = activeIndex
-        crumbs.forEach((btn, idx) => {
-          const dot = btn.querySelector<HTMLElement>('.process-crumb-dot')
-          if (idx === activeIndex) {
-            btn.style.borderColor = 'rgba(200, 169, 110, 0.9)'
-            btn.style.backgroundColor = 'rgba(200, 169, 110, 0.1)'
-            btn.style.color = '#F0ECE4'
-            if (dot) dot.style.backgroundColor = '#C8A96E'
-          } else {
-            btn.style.borderColor = 'rgba(255, 255, 255, 0.08)'
-            btn.style.backgroundColor = 'transparent'
-            btn.style.color = 'rgba(240, 236, 228, 0.4)'
-            if (dot) dot.style.backgroundColor = 'rgba(255, 255, 255, 0.3)'
+        // Initial visual setup (stages 02-04 hidden; stage 01 handled by introTl)
+        panels.forEach((p, i) => {
+          if (i > 0) {
+            gsap.set(p, {
+              autoAlpha: 0,
+              y: reduceMotion ? 0 : 28,
+              force3D: true,
+            })
           }
         })
-      }
 
-      updateBreadcrumbs(0)
+        overlaysTop.forEach((ov, i) => {
+          if (i > 0) {
+            gsap.set(ov, {
+              autoAlpha: 0,
+              force3D: true,
+            })
+          }
+        })
 
-      // ── MASTER CONTINUOUS TIMELINE ──────────────────────────────────────────
-      // Total duration = 4.0 units
-      // Continuous camera motion runs from 0.0 to 4.0 without any pauses or dead zones.
-      // Stage text cross-fades naturally across this underlying continuous motion.
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: 'top top',
-          end: '+=300%',
-          pin: true,
-          scrub: true, // Direct 1:1 scroll responsiveness (instant, zero catch-up lag)
-          anticipatePin: 1,
-          onUpdate: (self) => {
-            const p = self.progress
-            const stage = p < 0.25 ? 0 : p < 0.50 ? 1 : p < 0.75 ? 2 : 3
-            updateBreadcrumbs(stage)
-          },
-        },
-      })
+        overlaysBot.forEach((ov, i) => {
+          if (i > 0) {
+            gsap.set(ov, {
+              autoAlpha: 0,
+              force3D: true,
+            })
+          }
+        })
 
-      // 1. CONTINUOUS CAMERA SCALE & DRIFT (0.0 -> 4.0, zero dead zones)
-      if (img) {
-        tl.fromTo(
-          img,
-          {
+        if (img) {
+          gsap.set(img, {
             scale: 1.03,
             x: 0,
             y: 0,
             force3D: true,
-          },
-          {
-            scale: 1.19,
-            x: -14,
-            y: 8,
-            duration: 4.0,
-            ease: 'none',
-            force3D: true,
-          },
-          0
-        )
-      }
+          })
+        }
 
-      // 2. CONTINUOUS SPECULAR SHEEN SWEEP (0.0 -> 4.0)
-      if (sheen) {
-        tl.fromTo(
-          sheen,
-          {
+        if (sheen) {
+          gsap.set(sheen, {
             xPercent: -80,
-            opacity: 0.20,
+            opacity: reduceMotion ? 0.08 : 0.20,
             force3D: true,
+          })
+        }
+
+        if (bar) {
+          gsap.set(bar, { scaleX: 0.05, transformOrigin: 'left center', force3D: true })
+        }
+
+        // ── 0. INTRODUCTORY CLEAN ENTRANCE / CINEMATIC CONNECTION ────────────
+        // Smoothly establishes 01 CLEAN and the photographic visual as the user
+        // scrolls down from the Hero into the Process section (top 85% -> top top).
+        const introTl = gsap.timeline({
+          scrollTrigger: {
+            trigger: container,
+            start: 'top 85%',
+            end: 'top top',
+            scrub: scrubValue,
           },
-          {
-            xPercent: 95,
-            opacity: 0.88,
-            duration: 4.0,
-            ease: 'none',
-            force3D: true,
+        })
+
+        if (headerRef.current) {
+          introTl.fromTo(
+            headerRef.current,
+            { opacity: 0, y: reduceMotion ? 0 : -14 },
+            { opacity: 1, y: 0, ease: 'none', force3D: true },
+            0
+          )
+        }
+
+        if (photoPortalRef.current) {
+          introTl.fromTo(
+            photoPortalRef.current,
+            {
+              opacity: 0.35,
+              scale: reduceMotion ? 1 : 0.96,
+              clipPath: 'inset(3% 3% 3% 3%)',
+            },
+            {
+              opacity: 1,
+              scale: 1,
+              clipPath: 'inset(0% 0% 0% 0%)',
+              ease: 'none',
+              force3D: true,
+            },
+            0
+          )
+        }
+
+        if (panels[0]) {
+          introTl.fromTo(
+            panels[0],
+            { autoAlpha: 0, y: reduceMotion ? 0 : 38 },
+            { autoAlpha: 1, y: 0, ease: 'none', force3D: true },
+            0
+          )
+        }
+
+        if (overlaysTop[0]) {
+          introTl.fromTo(
+            overlaysTop[0],
+            { autoAlpha: 0 },
+            { autoAlpha: 1, ease: 'none', force3D: true },
+            0.06
+          )
+        }
+
+        if (overlaysBot[0]) {
+          introTl.fromTo(
+            overlaysBot[0],
+            { autoAlpha: 0 },
+            { autoAlpha: 1, ease: 'none', force3D: true },
+            0.06
+          )
+        }
+
+        if (footerRef.current) {
+          introTl.fromTo(
+            footerRef.current,
+            { opacity: 0, y: reduceMotion ? 0 : 14 },
+            { opacity: 1, y: 0, ease: 'none', force3D: true },
+            0.06
+          )
+        }
+
+        // Breadcrumb updater (Pure DOM style update: zero React setState, zero re-renders)
+        let currentActiveCrumb = -1
+        const updateBreadcrumbs = (activeIndex: number) => {
+          if (activeIndex === currentActiveCrumb) return
+          currentActiveCrumb = activeIndex
+          crumbs.forEach((btn, idx) => {
+            const dot = btn.querySelector<HTMLElement>('.process-crumb-dot')
+            if (idx === activeIndex) {
+              btn.style.borderColor = 'rgba(200, 169, 110, 0.9)'
+              btn.style.backgroundColor = 'rgba(200, 169, 110, 0.1)'
+              btn.style.color = '#F0ECE4'
+              if (dot) dot.style.backgroundColor = '#C8A96E'
+            } else {
+              btn.style.borderColor = 'rgba(255, 255, 255, 0.08)'
+              btn.style.backgroundColor = 'transparent'
+              btn.style.color = 'rgba(240, 236, 228, 0.4)'
+              if (dot) dot.style.backgroundColor = 'rgba(255, 255, 255, 0.3)'
+            }
+          })
+        }
+
+        updateBreadcrumbs(0)
+
+        // ── MASTER CONTINUOUS TIMELINE ──────────────────────────────────────────
+        // Total duration = 4.0 units
+        // Continuous camera motion runs from 0.0 to 4.0 without any pauses or dead zones.
+        // Stage text cross-fades naturally across this underlying continuous motion.
+        const tl = gsap.timeline({
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: 'top top',
+            end: '+=300%',
+            pin: true,
+            scrub: scrubValue,
+            anticipatePin: 1,
+            fastScrollEnd: isMobile,
+            onUpdate: (self) => {
+              const p = self.progress
+              const stage = p < 0.25 ? 0 : p < 0.50 ? 1 : p < 0.75 ? 2 : 3
+              updateBreadcrumbs(stage)
+            },
           },
-          0
-        )
-      }
+        })
 
-      // 3. CONTINUOUS PROGRESS BAR FILL (0.0 -> 4.0)
-      if (bar) {
-        tl.fromTo(
-          bar,
-          { scaleX: 0.05, transformOrigin: 'left center', force3D: true },
-          { scaleX: 1.0, duration: 4.0, ease: 'none', force3D: true },
-          0
-        )
-      }
+        // 1. CONTINUOUS CAMERA SCALE & DRIFT (0.0 -> 4.0, zero dead zones)
+        if (img) {
+          tl.fromTo(
+            img,
+            {
+              scale: 1.03,
+              x: 0,
+              y: 0,
+              force3D: true,
+            },
+            {
+              scale: isMobile ? 1.12 : 1.19,
+              x: reduceMotion ? 0 : (isMobile ? -8 : -14),
+              y: reduceMotion ? 0 : (isMobile ? 4 : 8),
+              duration: 4.0,
+              ease: 'none',
+              force3D: true,
+            },
+            0
+          )
+        }
 
-      // 4. STAGE TEXT CROSS-FADES (Overlaying the continuous camera motion)
-      // Transition 1 -> 2: CLEAN exits (0.75 -> 1.05), CORRECT enters (0.90 -> 1.20)
-      if (panels[0]) {
-        tl.to(panels[0], { autoAlpha: 0, y: -28, duration: 0.30, ease: 'power1.inOut', force3D: true }, 0.75)
-      }
-      if (overlaysTop[0]) {
-        tl.to(overlaysTop[0], { autoAlpha: 0, duration: 0.25, ease: 'power1.inOut', force3D: true }, 0.75)
-      }
-      if (overlaysBot[0]) {
-        tl.to(overlaysBot[0], { autoAlpha: 0, duration: 0.25, ease: 'power1.inOut', force3D: true }, 0.75)
-      }
+        // 2. CONTINUOUS SPECULAR SHEEN SWEEP (0.0 -> 4.0)
+        if (sheen) {
+          tl.fromTo(
+            sheen,
+            {
+              xPercent: -80,
+              opacity: reduceMotion ? 0.08 : 0.20,
+              force3D: true,
+            },
+            {
+              xPercent: 95,
+              opacity: reduceMotion ? 0.35 : 0.88,
+              duration: 4.0,
+              ease: 'none',
+              force3D: true,
+            },
+            0
+          )
+        }
 
-      if (panels[1]) {
-        tl.fromTo(
-          panels[1],
-          { autoAlpha: 0, y: 28 },
-          { autoAlpha: 1, y: 0, duration: 0.30, ease: 'power1.out', force3D: true },
-          0.90
-        )
-      }
-      if (overlaysTop[1]) {
-        tl.fromTo(
-          overlaysTop[1],
-          { autoAlpha: 0 },
-          { autoAlpha: 1, duration: 0.25, ease: 'power1.out', force3D: true },
-          0.90
-        )
-      }
-      if (overlaysBot[1]) {
-        tl.fromTo(
-          overlaysBot[1],
-          { autoAlpha: 0 },
-          { autoAlpha: 1, duration: 0.25, ease: 'power1.out', force3D: true },
-          0.90
-        )
-      }
+        // 3. CONTINUOUS PROGRESS BAR FILL (0.0 -> 4.0)
+        if (bar) {
+          tl.fromTo(
+            bar,
+            { scaleX: 0.05, transformOrigin: 'left center', force3D: true },
+            { scaleX: 1.0, duration: 4.0, ease: 'none', force3D: true },
+            0
+          )
+        }
 
-      // Transition 2 -> 3: CORRECT exits (1.75 -> 2.05), PROTECT enters (1.90 -> 2.20)
-      if (panels[1]) {
-        tl.to(panels[1], { autoAlpha: 0, y: -28, duration: 0.30, ease: 'power1.inOut', force3D: true }, 1.75)
-      }
-      if (overlaysTop[1]) {
-        tl.to(overlaysTop[1], { autoAlpha: 0, duration: 0.25, ease: 'power1.inOut', force3D: true }, 1.75)
-      }
-      if (overlaysBot[1]) {
-        tl.to(overlaysBot[1], { autoAlpha: 0, duration: 0.25, ease: 'power1.inOut', force3D: true }, 1.75)
-      }
+        // 4. STAGE TEXT CROSS-FADES (Overlaying the continuous camera motion)
+        const yOffset = reduceMotion ? 0 : 28
 
-      if (panels[2]) {
-        tl.fromTo(
-          panels[2],
-          { autoAlpha: 0, y: 28 },
-          { autoAlpha: 1, y: 0, duration: 0.30, ease: 'power1.out', force3D: true },
-          1.90
-        )
-      }
-      if (overlaysTop[2]) {
-        tl.fromTo(
-          overlaysTop[2],
-          { autoAlpha: 0 },
-          { autoAlpha: 1, duration: 0.25, ease: 'power1.out', force3D: true },
-          1.90
-        )
-      }
-      if (overlaysBot[2]) {
-        tl.fromTo(
-          overlaysBot[2],
-          { autoAlpha: 0 },
-          { autoAlpha: 1, duration: 0.25, ease: 'power1.out', force3D: true },
-          1.90
-        )
-      }
+        // Transition 1 -> 2: CLEAN exits (0.75 -> 1.05), CORRECT enters (0.90 -> 1.20)
+        if (panels[0]) {
+          tl.to(panels[0], { autoAlpha: 0, y: -yOffset, duration: 0.30, ease: 'power1.inOut', force3D: true }, 0.75)
+        }
+        if (overlaysTop[0]) {
+          tl.to(overlaysTop[0], { autoAlpha: 0, duration: 0.25, ease: 'power1.inOut', force3D: true }, 0.75)
+        }
+        if (overlaysBot[0]) {
+          tl.to(overlaysBot[0], { autoAlpha: 0, duration: 0.25, ease: 'power1.inOut', force3D: true }, 0.75)
+        }
 
-      // Transition 3 -> 4: PROTECT exits (2.75 -> 3.05), PERFECT enters (2.90 -> 3.20)
-      if (panels[2]) {
-        tl.to(panels[2], { autoAlpha: 0, y: -28, duration: 0.30, ease: 'power1.inOut', force3D: true }, 2.75)
-      }
-      if (overlaysTop[2]) {
-        tl.to(overlaysTop[2], { autoAlpha: 0, duration: 0.25, ease: 'power1.inOut', force3D: true }, 2.75)
-      }
-      if (overlaysBot[2]) {
-        tl.to(overlaysBot[2], { autoAlpha: 0, duration: 0.25, ease: 'power1.inOut', force3D: true }, 2.75)
-      }
+        if (panels[1]) {
+          tl.fromTo(
+            panels[1],
+            { autoAlpha: 0, y: yOffset },
+            { autoAlpha: 1, y: 0, duration: 0.30, ease: 'power1.out', force3D: true },
+            0.90
+          )
+        }
+        if (overlaysTop[1]) {
+          tl.fromTo(
+            overlaysTop[1],
+            { autoAlpha: 0 },
+            { autoAlpha: 1, duration: 0.25, ease: 'power1.out', force3D: true },
+            0.90
+          )
+        }
+        if (overlaysBot[1]) {
+          tl.fromTo(
+            overlaysBot[1],
+            { autoAlpha: 0 },
+            { autoAlpha: 1, duration: 0.25, ease: 'power1.out', force3D: true },
+            0.90
+          )
+        }
 
-      if (panels[3]) {
-        tl.fromTo(
-          panels[3],
-          { autoAlpha: 0, y: 28 },
-          { autoAlpha: 1, y: 0, duration: 0.30, ease: 'power1.out', force3D: true },
-          2.90
-        )
-      }
-      if (overlaysTop[3]) {
-        tl.fromTo(
-          overlaysTop[3],
-          { autoAlpha: 0 },
-          { autoAlpha: 1, duration: 0.25, ease: 'power1.out', force3D: true },
-          2.90
-        )
-      }
-      if (overlaysBot[3]) {
-        tl.fromTo(
-          overlaysBot[3],
-          { autoAlpha: 0 },
-          { autoAlpha: 1, duration: 0.25, ease: 'power1.out', force3D: true },
-          2.90
-        )
-      }
+        // Transition 2 -> 3: CORRECT exits (1.75 -> 2.05), PROTECT enters (1.90 -> 2.20)
+        if (panels[1]) {
+          tl.to(panels[1], { autoAlpha: 0, y: -yOffset, duration: 0.30, ease: 'power1.inOut', force3D: true }, 1.75)
+        }
+        if (overlaysTop[1]) {
+          tl.to(overlaysTop[1], { autoAlpha: 0, duration: 0.25, ease: 'power1.inOut', force3D: true }, 1.75)
+        }
+        if (overlaysBot[1]) {
+          tl.to(overlaysBot[1], { autoAlpha: 0, duration: 0.25, ease: 'power1.inOut', force3D: true }, 1.75)
+        }
 
-      // Hold stage 4 comfortably before unpinning (3.20 -> 4.0)
-      tl.to({}, { duration: 0.80 }, 3.20)
+        if (panels[2]) {
+          tl.fromTo(
+            panels[2],
+            { autoAlpha: 0, y: yOffset },
+            { autoAlpha: 1, y: 0, duration: 0.30, ease: 'power1.out', force3D: true },
+            1.90
+          )
+        }
+        if (overlaysTop[2]) {
+          tl.fromTo(
+            overlaysTop[2],
+            { autoAlpha: 0 },
+            { autoAlpha: 1, duration: 0.25, ease: 'power1.out', force3D: true },
+            1.90
+          )
+        }
+        if (overlaysBot[2]) {
+          tl.fromTo(
+            overlaysBot[2],
+            { autoAlpha: 0 },
+            { autoAlpha: 1, duration: 0.25, ease: 'power1.out', force3D: true },
+            1.90
+          )
+        }
 
+        // Transition 3 -> 4: PROTECT exits (2.75 -> 3.05), PERFECT enters (2.90 -> 3.20)
+        if (panels[2]) {
+          tl.to(panels[2], { autoAlpha: 0, y: -yOffset, duration: 0.30, ease: 'power1.inOut', force3D: true }, 2.75)
+        }
+        if (overlaysTop[2]) {
+          tl.to(overlaysTop[2], { autoAlpha: 0, duration: 0.25, ease: 'power1.inOut', force3D: true }, 2.75)
+        }
+        if (overlaysBot[2]) {
+          tl.to(overlaysBot[2], { autoAlpha: 0, duration: 0.25, ease: 'power1.inOut', force3D: true }, 2.75)
+        }
+
+        if (panels[3]) {
+          tl.fromTo(
+            panels[3],
+            { autoAlpha: 0, y: yOffset },
+            { autoAlpha: 1, y: 0, duration: 0.30, ease: 'power1.out', force3D: true },
+            2.90
+          )
+        }
+        if (overlaysTop[3]) {
+          tl.fromTo(
+            overlaysTop[3],
+            { autoAlpha: 0 },
+            { autoAlpha: 1, duration: 0.25, ease: 'power1.out', force3D: true },
+            2.90
+          )
+        }
+        if (overlaysBot[3]) {
+          tl.fromTo(
+            overlaysBot[3],
+            { autoAlpha: 0 },
+            { autoAlpha: 1, duration: 0.25, ease: 'power1.out', force3D: true },
+            2.90
+          )
+        }
+
+        // Hold stage 4 comfortably before unpinning (3.20 -> 4.0)
+        tl.to({}, { duration: 0.80 }, 3.20)
+      },
+      sectionRef
+    )
+
+    const handleOrientation = () => {
       ScrollTrigger.refresh()
-    }, sectionRef)
+    }
+    window.addEventListener('orientationchange', handleOrientation)
 
-    return () => ctx.revert()
+    return () => {
+      window.removeEventListener('orientationchange', handleOrientation)
+      mm.revert()
+    }
   }, [])
 
   // Smooth click jump to stage position
@@ -468,10 +499,10 @@ export function ProcessSection() {
       {/* Desktop Pinned Viewport Container */}
       <div
         ref={pinnedWrapperRef}
-        className="relative w-full min-h-screen lg:h-screen lg:max-h-[1080px] flex flex-col justify-between overflow-visible lg:overflow-hidden px-5 sm:px-8 lg:px-14 xl:px-20 pt-24 sm:pt-28 pb-6 sm:pb-8"
+        className="relative w-full min-h-screen lg:h-screen lg:max-h-[1080px] flex flex-col justify-between overflow-visible lg:overflow-hidden px-5 sm:px-8 lg:px-14 xl:px-20 pt-20 sm:pt-24 lg:pt-28 pb-4 sm:pb-6 lg:pb-8"
       >
         {/* 1. TOP METADATA & PROTOCOL BAR (Persistent Chrome) */}
-        <header ref={headerRef} className="relative z-30 flex items-center justify-between gap-4 pb-4 sm:pb-5 border-b border-white/[0.08]">
+        <header ref={headerRef} className="relative z-30 flex items-center justify-between gap-4 pb-3 sm:pb-4 lg:pb-5 border-b border-white/[0.08]">
           <div className="flex items-center gap-3 sm:gap-4">
             <div className="w-6 sm:w-8 h-px bg-[#C8A96E]" />
             <span className="font-mono text-xs sm:text-[13px] text-[#C8A96E] uppercase tracking-[0.24em] font-semibold">
@@ -490,13 +521,13 @@ export function ProcessSection() {
         </header>
 
         {/* 2. MAIN EDITORIAL ARENA: TYPOGRAPHY (LEFT) + DOMINANT PHOTO (RIGHT) */}
-        <div className="relative z-20 flex-1 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 xl:gap-16 items-center my-4 sm:my-6">
+        <div className="relative z-20 flex-1 grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-6 lg:gap-12 xl:gap-16 items-center my-1 sm:my-3 lg:my-6">
 
           {/* Left Column (5 Cols): Staged Editorial Typography Panels */}
-          <div className="lg:col-span-5 relative min-h-[360px] sm:min-h-[400px] lg:min-h-[440px] flex flex-col justify-center">
+          <div className="lg:col-span-5 relative min-h-[180px] sm:min-h-[260px] lg:min-h-[440px] flex flex-col justify-center">
 
             {/* Statically rendered panels: GSAP controls visibility via autoAlpha */}
-            <div className="relative w-full h-full min-h-[380px] flex items-center">
+            <div className="relative w-full h-full min-h-[180px] sm:min-h-[260px] lg:min-h-[380px] flex items-center">
               {STAGES.map((stage, idx) => (
                 <div
                   key={stage.number}
@@ -510,8 +541,8 @@ export function ProcessSection() {
                   }}
                 >
                   {/* Eyebrow: Number + Active Metric */}
-                  <div className="flex items-center gap-3 mb-3 sm:mb-4">
-                    <span className="font-mono text-sm sm:text-base tracking-[0.22em] text-[#C8A96E] font-medium">
+                  <div className="flex items-center gap-3 mb-2 sm:mb-3 lg:mb-4">
+                    <span className="font-mono text-xs sm:text-sm lg:text-base tracking-[0.22em] text-[#C8A96E] font-medium">
                       STAGE {stage.number}
                     </span>
                     <div className="w-5 h-px bg-white/20" />
@@ -521,12 +552,12 @@ export function ProcessSection() {
                   </div>
 
                   {/* Massive Stage Headline */}
-                  <h2 className="font-display text-5xl sm:text-7xl lg:text-7xl xl:text-8xl font-bold uppercase tracking-tight text-[#F0ECE4] leading-[0.92]">
+                  <h2 className="font-display text-4xl sm:text-6xl lg:text-7xl xl:text-8xl font-bold uppercase tracking-tight text-[#F0ECE4] leading-[0.92]">
                     {stage.title}
                   </h2>
 
                   {/* Subtitle in Warm Gold */}
-                  <div className="mt-3 sm:mt-4 flex items-center gap-3">
+                  <div className="mt-2 sm:mt-3 lg:mt-4 flex items-center gap-3">
                     <div className="w-8 h-px bg-[#C8A96E]" />
                     <h3 className="font-display text-xs sm:text-sm lg:text-base tracking-wider uppercase text-[#C8A96E] font-medium">
                       {stage.subtitle}
@@ -534,12 +565,12 @@ export function ProcessSection() {
                   </div>
 
                   {/* Body Narrative */}
-                  <p className="mt-4 sm:mt-5 font-body text-sm sm:text-base lg:text-[1.05rem] text-[#A0A4AB] font-light leading-relaxed max-w-lg">
+                  <p className="mt-2 sm:mt-4 lg:mt-5 font-body text-xs sm:text-sm lg:text-[1.05rem] text-[#A0A4AB] font-light leading-relaxed max-w-lg">
                     {stage.description}
                   </p>
 
                   {/* Lower Technical Telemetry Line */}
-                  <div className="mt-6 sm:mt-8 pt-4 sm:pt-5 border-t border-white/[0.08] flex items-center justify-between gap-3 font-mono text-[10px] sm:text-[11px] text-[#8A8A8A] uppercase tracking-wider">
+                  <div className="mt-3 sm:mt-6 lg:mt-8 pt-2 sm:pt-4 lg:pt-5 border-t border-white/[0.08] flex items-center justify-between gap-3 font-mono text-[9px] sm:text-[10px] lg:text-[11px] text-[#8A8A8A] uppercase tracking-wider">
                     <span>Standard: {stage.spec}</span>
                     <span className="text-[#C8A96E]">Est. Austin TX</span>
                   </div>
@@ -551,7 +582,7 @@ export function ProcessSection() {
 
           {/* Right Column (7 Cols): Dominant Studio Photographic Visual Portal */}
           <div className="lg:col-span-7 relative w-full flex items-center justify-center">
-            <div ref={photoPortalRef} className="relative w-full h-[45vh] sm:h-[52vh] lg:h-[62vh] xl:h-[68vh] max-h-[720px] bg-[#0E1013] border border-white/[0.09] overflow-hidden shadow-2xl">
+            <div ref={photoPortalRef} className="relative w-full h-[26vh] sm:h-[34vh] lg:h-[62vh] xl:h-[68vh] max-h-[240px] sm:max-h-[360px] lg:max-h-[720px] bg-[#0E1013] border border-white/[0.09] overflow-hidden shadow-2xl">
 
               {/* Hardware Accelerated Image Frame */}
               <div
