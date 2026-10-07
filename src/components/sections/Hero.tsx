@@ -1,5 +1,5 @@
 /**
- * BLACKLINE AUTO DETAILING — Hero Section (Stage 1 Redesign)
+ * BLACKLINE AUTO DETAILING - Hero Section (Stage 1 Redesign)
  *
  * Visual Direction:
  *   - High-end cinematic automotive campaign (not a standard car-detailing site).
@@ -29,71 +29,72 @@ export function Hero() {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
     const ctx = gsap.context(() => {
-      // ── GSAP Entrance Timeline (Slow, Smooth, Cinematic) ─────────────────
+      // -- GSAP Entrance Timeline (Slow, Smooth, Cinematic) -----------------
       if (!reduced) {
         const tl = gsap.timeline({
           defaults: { ease: 'power3.out' },
-          delay: 0.1,
+          delay: 0.05,
         })
 
         // 1. Vehicle image reveal: subtle scale settle & exposure fade
         tl.fromTo(
           '.hero-car-img',
-          { scale: 1.10, opacity: 0 },
-          { scale: 1.0, opacity: 1, duration: 2.2, ease: 'power2.out' },
+          { scale: 1.08, opacity: 0.2 },
+          { scale: 1.0, opacity: 1, duration: 1.4, ease: 'power2.out', clearProps: 'opacity' },
           0
         )
 
         // 2. Editorial metadata bar slides in
         tl.from(
           '.hero-meta-item',
-          { opacity: 0, y: -12, stagger: 0.08, duration: 0.8, ease: 'power3.out' },
-          0.3
+          { opacity: 0, y: -10, stagger: 0.06, duration: 0.6, ease: 'power3.out', clearProps: 'opacity,transform' },
+          0.15
         )
 
         // 3. Gold accent rule expands
         tl.from(
           '.hero-gold-line',
-          { scaleX: 0, transformOrigin: 'left center', duration: 0.9, ease: 'power3.inOut' },
-          0.4
+          { scaleX: 0, transformOrigin: 'left center', duration: 0.7, ease: 'power3.inOut' },
+          0.25
         )
 
         // 4. Headline lines slide up from masked overflow
         tl.from(
           '.hero-headline-row',
           {
-            y: '115%',
+            y: '105%',
             opacity: 0,
-            stagger: 0.14,
-            duration: 1.25,
+            stagger: 0.12,
+            duration: 0.9,
             ease: 'power4.out',
+            clearProps: 'opacity,transform',
           },
-          0.5
+          0.3
         )
 
         // 5. Narrative subtext fades up
         tl.from(
           '.hero-narrative',
-          { opacity: 0, y: 16, duration: 0.85, ease: 'power3.out' },
-          0.9
+          { opacity: 0, y: 12, duration: 0.65, ease: 'power3.out', clearProps: 'opacity,transform' },
+          0.55
         )
 
         // 6. Action CTAs entrance
         tl.from(
           '.hero-cta-btn',
-          { opacity: 0, y: 14, stagger: 0.10, duration: 0.75, ease: 'power3.out' },
-          1.05
+          { opacity: 0, y: 12, stagger: 0.08, duration: 0.6, ease: 'power3.out', clearProps: 'opacity,transform' },
+          0.7
         )
 
         // 7. Bottom editorial strip
         tl.from(
           '.hero-footer-strip',
-          { opacity: 0, duration: 0.9, ease: 'power2.out' },
-          1.2
+          { opacity: 0, duration: 0.6, ease: 'power2.out', clearProps: 'opacity' },
+          0.85
         )
       }
 
-      // ── Desktop Cursor Parallax (Pointer: fine only) ──────────────────────
+      // -- Desktop Cursor Parallax (Pointer: fine only) ----------------------
       const isTouch = window.matchMedia('(pointer: coarse)').matches
       if (!reduced && !isTouch && imgRef.current && contentRef.current) {
         const imgX = gsap.quickTo(imgRef.current, 'x', { duration: 2.0, ease: 'power2.out' })
@@ -140,7 +141,7 @@ export function Hero() {
     <section
       ref={heroRef}
       id="hero"
-      aria-label="Blackline Auto Detailing — Hero"
+      aria-label="Blackline Auto Detailing - Hero"
       className="relative min-h-[100dvh] w-full overflow-hidden flex flex-col justify-between"
       style={{ backgroundColor: 'var(--bl-bg, #08090A)' }}
     >
@@ -150,22 +151,22 @@ export function Hero() {
         className="absolute inset-0 pointer-events-none select-none z-0 overflow-hidden"
       >
         {/* Desktop: positioned across right 64% with cinematic bleeds */}
-        {/* Mobile: top 44vh with deep bottom fade */}
+        {/* Mobile: responsive top 52vh with tuned atmospheric gradient masks */}
         <div
-          className="hero-car-wrapper absolute right-0 top-0 h-[48vh] md:h-full w-full md:w-[64vw] lg:w-[60vw] overflow-hidden"
+          className="hero-car-wrapper absolute right-0 top-0 h-[52vh] sm:h-[56vh] md:h-full w-full md:w-[64vw] lg:w-[60vw] overflow-hidden"
           style={{ willChange: 'transform, opacity' }}
         >
           <img
             ref={imgRef}
             src={HERO_IMAGE}
-            alt="Black BMW M4 Competition — Blackline studio detail"
+            alt="Black BMW M4 Competition - Blackline studio detail"
             loading="eager"
             decoding="sync"
-            className="hero-car-img w-full h-full object-cover object-[center_30%] md:object-[35%_center]"
+            className="hero-car-img w-full h-full object-cover object-[center_28%] md:object-[35%_center]"
             style={{ willChange: 'transform' }}
           />
 
-          {/* Deep multi-stop gradient masks — blends vehicle seamlessly into black studio atmosphere */}
+          {/* Deep multi-stop gradient masks -- blends vehicle seamlessly into black studio atmosphere */}
           {/* Left-to-right fade (desktop) */}
           <div
             className="hidden md:block absolute inset-0"
@@ -177,7 +178,7 @@ export function Hero() {
 
           {/* Top fade (nav clearance) */}
           <div
-            className="absolute inset-x-0 top-0 h-36"
+            className="absolute inset-x-0 top-0 h-20 sm:h-24 md:h-36"
             style={{
               background:
                 'linear-gradient(to bottom, #08090A 0%, rgba(8,9,10,0.7) 50%, transparent 100%)',
@@ -186,7 +187,7 @@ export function Hero() {
 
           {/* Bottom fade (floor integration) */}
           <div
-            className="absolute inset-x-0 bottom-0 h-40 md:h-52"
+            className="absolute inset-x-0 bottom-0 h-28 sm:h-36 md:h-52"
             style={{
               background:
                 'linear-gradient(to top, #08090A 0%, rgba(8,9,10,0.85) 40%, transparent 100%)',
@@ -204,8 +205,8 @@ export function Hero() {
         />
       </div>
 
-      {/* ── Main Hero Composition (Asymmetric Editorial Layout) ───────────── */}
-      <div className="relative z-10 w-full max-w-[1440px] mx-auto px-5 sm:px-8 md:px-12 lg:px-16 pt-20 sm:pt-24 md:pt-28 lg:pt-32 pb-6 md:pb-12 flex-1 flex flex-col justify-between">
+      {/* -- Main Hero Composition (Asymmetric Editorial Layout) ------------- */}
+      <div className="relative z-10 w-full max-w-[1440px] mx-auto px-5 sm:px-8 md:px-12 lg:px-16 pt-16 sm:pt-20 md:pt-28 lg:pt-32 pb-5 sm:pb-6 md:pb-12 flex-1 flex flex-col justify-between">
         
         {/* TOP: Brand & Studio Metadata */}
         <div
@@ -230,11 +231,8 @@ export function Hero() {
           <span className="hero-meta-item text-[#C8A96E] font-medium">PREMIUM AUTO DETAILING</span>
         </div>
 
-        {/* Mobile Spacer to clear top car image */}
-        <div className="h-[16vh] md:hidden" aria-hidden="true" />
-
         {/* CENTER: Oversized Editorial Campaign Typography */}
-        <div ref={contentRef} className="my-auto py-6 md:py-10 max-w-[1100px]">
+        <div ref={contentRef} className="my-auto py-3 sm:py-6 md:py-10 max-w-[1100px]">
           
           {/* Subtle gold campaign accent rule */}
           <div
@@ -306,7 +304,7 @@ export function Hero() {
         </div>
 
         {/* BOTTOM: Editorial Coordinates & Scroll Cue */}
-        <div className="hero-footer-strip pt-6 border-t border-[rgba(255,255,255,0.06)] flex items-center justify-between gap-6 text-[10px] sm:text-xs font-mono tracking-[0.20em] uppercase text-[#5A5A5A]">
+        <div className="hero-footer-strip pt-4 sm:pt-6 border-t border-[rgba(255,255,255,0.06)] flex items-center justify-between gap-6 text-[10px] sm:text-xs font-mono tracking-[0.20em] uppercase text-[#5A5A5A]">
           <div className="flex items-center gap-4">
             <span className="hidden sm:inline-block text-[#8A8A8A]">AUSTIN HQ</span>
             <span className="hidden sm:inline-block text-[#3A3A3A]" aria-hidden="true">/</span>
