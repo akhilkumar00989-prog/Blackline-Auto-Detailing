@@ -169,7 +169,7 @@ export function ServicesSection() {
     <section
       id="services"
       ref={sectionRef}
-      className="relative w-full overflow-x-clip bg-[#08090A] text-[#F0ECE4] pt-20 pb-28 sm:pt-28 sm:pb-36 md:pt-36 md:pb-44 lg:pt-40 lg:pb-52 border-t border-white/[0.08]"
+      className="relative w-full overflow-x-clip bg-[#08090A] text-[#F0ECE4] pt-14 pb-20 sm:pt-24 sm:pb-32 md:pt-36 md:pb-44 lg:pt-40 lg:pb-52 border-t border-white/[0.08]"
     >
       {/* Background Architectural Grid Lines */}
       <div
@@ -187,7 +187,7 @@ export function ServicesSection() {
         {/* ── TOP EDITORIAL METADATA BAR ────────────────────────────────────── */}
         <div
           ref={headerRef}
-          className="flex flex-wrap items-center justify-between gap-3 pb-6 sm:pb-8 border-b border-white/[0.08]"
+          className="flex flex-wrap items-center justify-between gap-3 pb-5 sm:pb-8 border-b border-white/[0.08]"
         >
           <div className="services-eyebrow-item flex items-center gap-3">
             <div className="w-6 sm:w-8 h-px bg-[#C8A96E]" />
@@ -204,7 +204,7 @@ export function ServicesSection() {
         </div>
 
         {/* ── HEADLINE & NARRATIVE (Asymmetric Split) ────────────────────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 pt-10 sm:pt-16 pb-14 sm:pb-20 lg:pb-28 items-end">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-10 lg:gap-16 pt-7 sm:pt-12 lg:pt-16 pb-6 sm:pb-14 lg:pb-28 items-end">
           {/* Dominant Section Headline */}
           <div className="lg:col-span-7">
             <h2
@@ -217,7 +217,7 @@ export function ServicesSection() {
 
           {/* Supporting Narrative Copy */}
           <div ref={narrativeRef} className="lg:col-span-5 flex flex-col justify-end">
-            <div className="w-10 sm:w-12 h-px bg-[#C8A96E]/60 mb-5 sm:mb-6" />
+            <div className="w-10 sm:w-12 h-px bg-[#C8A96E]/60 mb-4 sm:mb-6" />
             <p className="font-body text-base sm:text-lg lg:text-xl text-[#F0ECE4] font-medium leading-snug mb-2 sm:mb-3">
               Precision protocols engineered for collectors and performance vehicles.
             </p>
@@ -225,7 +225,7 @@ export function ServicesSection() {
               Every package is executed with hospital-grade demineralization, calibrated high-CRI lighting, and surgical paint leveling.
             </p>
 
-            <div className="mt-6 sm:mt-8 pt-4 sm:pt-5 border-t border-white/[0.08] flex flex-wrap items-center justify-between gap-2 font-mono text-[10px] sm:text-[11px] text-[#8A8A8A] uppercase tracking-wider">
+            <div className="mt-5 sm:mt-8 pt-4 sm:pt-5 border-t border-white/[0.08] flex flex-wrap items-center justify-between gap-2 font-mono text-[10px] sm:text-[11px] text-[#8A8A8A] uppercase tracking-wider">
               <span>Inspection Standard: 5600K High-CRI</span>
               <span className="text-[#C8A96E]">Bookings By Appointment</span>
             </div>
@@ -248,7 +248,7 @@ export function ServicesSection() {
                   setActiveService(index)
                   setIsHovered(true)
                 }}
-                className="service-editorial-row group relative py-8 sm:py-12 lg:py-14 transition-all duration-300 hover:bg-white/[0.015]"
+                className="service-editorial-row group relative py-6 sm:py-10 lg:py-14 transition-all duration-300 hover:bg-white/[0.015]"
               >
                 {/* Horizontal hover guide line accent */}
                 <div
