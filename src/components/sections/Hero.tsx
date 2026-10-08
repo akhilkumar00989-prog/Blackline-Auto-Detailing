@@ -28,113 +28,206 @@ export function Hero() {
     if (!heroRef.current) return
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-    const ctx = gsap.context(() => {
-      // -- GSAP Entrance Timeline (Slow, Smooth, Cinematic) -----------------
-      if (!reduced) {
-        const tl = gsap.timeline({
-          defaults: { ease: 'power3.out' },
-          delay: 0.05,
+    // Fail-safe: Guarantee all hero elements are visible even if animation fails or stalls
+    const ensureVisible = () => {
+      if (!heroRef.current) return
+      const selectors = [
+        '.hero-car-img',
+        '.hero-meta-item',
+        '.hero-gold-line',
+        '.hero-headline-row',
+        '.hero-narrative',
+        '.hero-cta-btn',
+        '.hero-footer-strip',
+      ]
+      selectors.forEach((sel) => {
+        heroRef.current?.querySelectorAll<HTMLElement>(sel).forEach((el) => {
+          el.style.opacity = '1'
+          el.style.visibility = 'visible'
+          el.style.transform = 'none'
         })
+      })
+    }
 
-        // 1. Vehicle image reveal: subtle scale settle & exposure fade
-        tl.fromTo(
-          '.hero-car-img',
-          { scale: 1.08, opacity: 0.2 },
-          { scale: 1.0, opacity: 1, duration: 1.4, ease: 'power2.out', clearProps: 'opacity' },
-          0
-        )
+    const mm = gsap.matchMedia()
 
-        // 2. Editorial metadata bar slides in
-        tl.from(
-          '.hero-meta-item',
-          { opacity: 0, y: -10, stagger: 0.06, duration: 0.6, ease: 'power3.out', clearProps: 'opacity,transform' },
-          0.15
-        )
+    mm.add(
+      {
+        isDesktop: '(min-width: 768px)',
+        isMobile: '(max-width: 767px)',
+      },
+      (context) => {
+        const { isDesktop } = context.conditions as { isDesktop: boolean }
 
-        // 3. Gold accent rule expands
-        tl.from(
-          '.hero-gold-line',
-          { scaleX: 0, transformOrigin: 'left center', duration: 0.7, ease: 'power3.inOut' },
-          0.25
-        )
-
-        // 4. Headline lines slide up from masked overflow
-        tl.from(
-          '.hero-headline-row',
-          {
-            y: '105%',
-            opacity: 0,
-            stagger: 0.12,
-            duration: 0.9,
-            ease: 'power4.out',
-            clearProps: 'opacity,transform',
-          },
-          0.3
-        )
-
-        // 5. Narrative subtext fades up
-        tl.from(
-          '.hero-narrative',
-          { opacity: 0, y: 12, duration: 0.65, ease: 'power3.out', clearProps: 'opacity,transform' },
-          0.55
-        )
-
-        // 6. Action CTAs entrance
-        tl.from(
-          '.hero-cta-btn',
-          { opacity: 0, y: 12, stagger: 0.08, duration: 0.6, ease: 'power3.out', clearProps: 'opacity,transform' },
-          0.7
-        )
-
-        // 7. Bottom editorial strip
-        tl.from(
-          '.hero-footer-strip',
-          { opacity: 0, duration: 0.6, ease: 'power2.out', clearProps: 'opacity' },
-          0.85
-        )
-      }
-
-      // -- Desktop Cursor Parallax (Pointer: fine only) ----------------------
-      const isTouch = window.matchMedia('(pointer: coarse)').matches
-      if (!reduced && !isTouch && imgRef.current && contentRef.current) {
-        const imgX = gsap.quickTo(imgRef.current, 'x', { duration: 2.0, ease: 'power2.out' })
-        const imgY = gsap.quickTo(imgRef.current, 'y', { duration: 2.0, ease: 'power2.out' })
-        const textX = gsap.quickTo(contentRef.current, 'x', { duration: 2.4, ease: 'power2.out' })
-        const textY = gsap.quickTo(contentRef.current, 'y', { duration: 2.4, ease: 'power2.out' })
-
-        const heroEl = heroRef.current!
-        const handleMove = (e: MouseEvent) => {
-          const rect = heroEl.getBoundingClientRect()
-          const nx = (e.clientX / rect.width - 0.5) * 2  // -1 to 1
-          const ny = (e.clientY / rect.height - 0.5) * 2
-
-          // Background car moves subtly opposite to cursor
-          imgX(nx * -14)
-          imgY(ny * -8)
-
-          // Foreground typography moves gently with cursor
-          textX(nx * 6)
-          textY(ny * 4)
+        if (reduced) {
+          ensureVisible()
+          return
         }
 
-        const handleLeave = () => {
-          imgX(0)
-          imgY(0)
-          textX(0)
-          textY(0)
+        if (isDesktop) {
+          // -- DESKTOP CINEMATIC ENTRANCE TIMELINE (PRESERVED EXACTLY) --------
+          const tl = gsap.timeline({
+            defaults: { ease: 'power3.out' },
+            delay: 0.05,
+            onComplete: ensureVisible,
+          })
+
+          tl.fromTo(
+            '.hero-car-img',
+            { scale: 1.08, opacity: 0.2 },
+            { scale: 1.0, opacity: 1, duration: 1.4, ease: 'power2.out', clearProps: 'opacity' },
+            0
+          )
+
+          tl.from(
+            '.hero-meta-item',
+            { opacity: 0, y: -10, stagger: 0.06, duration: 0.6, ease: 'power3.out', clearProps: 'opacity,transform' },
+            0.15
+          )
+
+          tl.from(
+            '.hero-gold-line',
+            { scaleX: 0, transformOrigin: 'left center', duration: 0.7, ease: 'power3.inOut' },
+            0.25
+          )
+
+          tl.from(
+            '.hero-headline-row',
+            {
+              y: '105%',
+              opacity: 0,
+              stagger: 0.12,
+              duration: 0.9,
+              ease: 'power4.out',
+              clearProps: 'opacity,transform',
+            },
+            0.3
+          )
+
+          tl.from(
+            '.hero-narrative',
+            { opacity: 0, y: 12, duration: 0.65, ease: 'power3.out', clearProps: 'opacity,transform' },
+            0.55
+          )
+
+          tl.from(
+            '.hero-cta-btn',
+            { opacity: 0, y: 12, stagger: 0.08, duration: 0.6, ease: 'power3.out', clearProps: 'opacity,transform' },
+            0.7
+          )
+
+          tl.from(
+            '.hero-footer-strip',
+            { opacity: 0, duration: 0.6, ease: 'power2.out', clearProps: 'opacity' },
+            0.85
+          )
+
+          // -- Desktop Cursor Parallax (Pointer: fine only) --------------------
+          const isTouch = window.matchMedia('(pointer: coarse)').matches
+          if (!isTouch && imgRef.current && contentRef.current) {
+            const imgX = gsap.quickTo(imgRef.current, 'x', { duration: 2.0, ease: 'power2.out' })
+            const imgY = gsap.quickTo(imgRef.current, 'y', { duration: 2.0, ease: 'power2.out' })
+            const textX = gsap.quickTo(contentRef.current, 'x', { duration: 2.4, ease: 'power2.out' })
+            const textY = gsap.quickTo(contentRef.current, 'y', { duration: 2.4, ease: 'power2.out' })
+
+            const heroEl = heroRef.current!
+            const handleMove = (e: MouseEvent) => {
+              const rect = heroEl.getBoundingClientRect()
+              const nx = (e.clientX / rect.width - 0.5) * 2  // -1 to 1
+              const ny = (e.clientY / rect.height - 0.5) * 2
+
+              // Background car moves subtly opposite to cursor
+              imgX(nx * -14)
+              imgY(ny * -8)
+
+              // Foreground typography moves gently with cursor
+              textX(nx * 6)
+              textY(ny * 4)
+            }
+
+            const handleLeave = () => {
+              imgX(0)
+              imgY(0)
+              textX(0)
+              textY(0)
+            }
+
+            heroEl.addEventListener('mousemove', handleMove, { passive: true })
+            heroEl.addEventListener('mouseleave', handleLeave)
+
+            return () => {
+              heroEl.removeEventListener('mousemove', handleMove)
+              heroEl.removeEventListener('mouseleave', handleLeave)
+            }
+          }
+        } else {
+          // -- MOBILE ROBUST ENTRANCE TIMELINE --------------------------------
+          // Fast, lightweight entrance that never traps elements off-screen or at opacity 0
+          const tl = gsap.timeline({
+            defaults: { ease: 'power2.out' },
+            onComplete: ensureVisible,
+          })
+
+          tl.fromTo(
+            '.hero-car-img',
+            { opacity: 0.6 },
+            { opacity: 1, duration: 0.5, clearProps: 'all' },
+            0
+          )
+
+          tl.fromTo(
+            '.hero-meta-item',
+            { opacity: 0 },
+            { opacity: 1, duration: 0.4, stagger: 0.04, clearProps: 'all' },
+            0.05
+          )
+
+          tl.fromTo(
+            '.hero-gold-line',
+            { scaleX: 0, transformOrigin: 'left center' },
+            { scaleX: 1, duration: 0.4, clearProps: 'all' },
+            0.1
+          )
+
+          tl.fromTo(
+            '.hero-headline-row',
+            { opacity: 0, y: 12 },
+            { opacity: 1, y: 0, duration: 0.45, stagger: 0.06, clearProps: 'all' },
+            0.1
+          )
+
+          tl.fromTo(
+            '.hero-narrative',
+            { opacity: 0, y: 10 },
+            { opacity: 1, y: 0, duration: 0.4, clearProps: 'all' },
+            0.2
+          )
+
+          tl.fromTo(
+            '.hero-cta-btn',
+            { opacity: 0, y: 10 },
+            { opacity: 1, y: 0, duration: 0.35, stagger: 0.05, clearProps: 'all' },
+            0.25
+          )
+
+          tl.fromTo(
+            '.hero-footer-strip',
+            { opacity: 0 },
+            { opacity: 1, duration: 0.3, clearProps: 'all' },
+            0.3
+          )
         }
+      },
+      heroRef
+    )
 
-        heroEl.addEventListener('mousemove', handleMove, { passive: true })
-        heroEl.addEventListener('mouseleave', handleLeave)
+    // Fallback timer: guarantee visible styles even if animation is halted by momentum scroll
+    const fallbackTimer = setTimeout(ensureVisible, 600)
 
-        return () => {
-          heroEl.removeEventListener('mousemove', handleMove)
-          heroEl.removeEventListener('mouseleave', handleLeave)
-        }
-      }
-    }, heroRef)
-
-    return () => ctx.revert()
+    return () => {
+      clearTimeout(fallbackTimer)
+      mm.revert()
+    }
   }, [])
 
   return (
