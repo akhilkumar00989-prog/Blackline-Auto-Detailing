@@ -101,10 +101,37 @@ export function ServicesSection() {
     if (!sectionRef.current) return
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-    const ctx = gsap.context(() => {
-      if (reduced) return
+    const ensureVisible = () => {
+      const rows = sectionRef.current?.querySelectorAll<HTMLElement>('.service-editorial-row')
+      rows?.forEach((r) => {
+        r.style.opacity = '1'
+        r.style.transform = 'none'
+        r.style.visibility = 'visible'
+      })
+      const items = sectionRef.current?.querySelectorAll<HTMLElement>('.services-eyebrow-item')
+      items?.forEach((i) => {
+        i.style.opacity = '1'
+        i.style.transform = 'none'
+      })
+      if (titleRef.current) {
+        titleRef.current.style.opacity = '1'
+        titleRef.current.style.transform = 'none'
+      }
+      if (narrativeRef.current) {
+        narrativeRef.current.style.opacity = '1'
+        narrativeRef.current.style.transform = 'none'
+      }
+    }
 
-      // ── 1. Top Metadata Bar Reveal ──────────────────────────────────────────
+    const mm = gsap.matchMedia()
+
+    mm.add('(min-width: 1024px)', () => {
+      if (reduced) {
+        ensureVisible()
+        return
+      }
+
+      // Desktop Entrance Animations
       gsap.from('.services-eyebrow-item', {
         scrollTrigger: {
           trigger: headerRef.current,
@@ -117,7 +144,6 @@ export function ServicesSection() {
         ease: 'power3.out',
       })
 
-      // ── 2. Headline Reveal ──────────────────────────────────────────────────
       if (titleRef.current) {
         gsap.from(titleRef.current, {
           scrollTrigger: {
@@ -131,7 +157,6 @@ export function ServicesSection() {
         })
       }
 
-      // ── 3. Narrative Copy Reveal ────────────────────────────────────────────
       if (narrativeRef.current) {
         gsap.from(narrativeRef.current, {
           scrollTrigger: {
@@ -146,7 +171,6 @@ export function ServicesSection() {
         })
       }
 
-      // ── 4. Progressive Services Rows Entrance ───────────────────────────────
       gsap.from('.service-editorial-row', {
         scrollTrigger: {
           trigger: rowsContainer.current,
@@ -158,18 +182,42 @@ export function ServicesSection() {
         duration: 0.95,
         ease: 'power3.out',
       })
+    })
 
-      ScrollTrigger.refresh()
-    }, sectionRef)
+    mm.add('(max-width: 1023px)', () => {
+      ensureVisible()
 
-    return () => ctx.revert()
+      if (!reduced) {
+        gsap.fromTo(
+          '.service-editorial-row',
+          { opacity: 0.85, y: 15 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.4,
+            stagger: 0.05,
+            ease: 'power2.out',
+            clearProps: 'transform,opacity',
+          }
+        )
+      }
+    })
+
+    const timer = setTimeout(ensureVisible, 250)
+
+    ScrollTrigger.refresh()
+
+    return () => {
+      clearTimeout(timer)
+      mm.revert()
+    }
   }, [])
 
   return (
     <section
       id="services"
       ref={sectionRef}
-      className="relative w-full overflow-x-clip bg-[#08090A] text-[#F0ECE4] pt-14 pb-20 sm:pt-24 sm:pb-32 md:pt-36 md:pb-44 lg:pt-40 lg:pb-52 border-t border-white/[0.08]"
+      className="relative w-full overflow-x-clip bg-[#08090A] text-[#F0ECE4] pt-14 pb-12 sm:pt-24 sm:pb-32 md:pt-36 md:pb-44 lg:pt-40 lg:pb-52 border-t border-white/[0.08]"
     >
       {/* Background Architectural Grid Lines */}
       <div
@@ -335,7 +383,7 @@ export function ServicesSection() {
         </div>
 
         {/* ── BOTTOM EDITORIAL SIGNATURE STRIP ───────────────────────────────── */}
-        <div className="mt-16 sm:mt-24 lg:mt-32 pt-6 sm:pt-8 border-t border-white/[0.08] flex flex-col sm:flex-row sm:items-center justify-between gap-3 font-mono text-[10px] sm:text-xs text-[#8A8A8A] uppercase tracking-wider">
+        <div className="mt-8 sm:mt-24 lg:mt-32 pt-6 sm:pt-8 border-t border-white/[0.08] flex flex-col sm:flex-row sm:items-center justify-between gap-3 font-mono text-[10px] sm:text-xs text-[#8A8A8A] uppercase tracking-wider">
           <div className="flex items-center gap-2.5 flex-wrap">
             <span className="w-1.5 h-1.5 border border-[#C8A96E] shrink-0" />
             <span className="break-words">
